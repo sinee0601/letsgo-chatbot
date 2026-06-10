@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiomysql
+google-genai
+pydantic
+pydantic-settings
+python-dotenv
+kiwipiepy
