@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
-sqlalchemy
-aiomysql
+motor
+redis
 google-genai
 pydantic
 pydantic-settings

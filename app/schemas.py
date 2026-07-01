@@ -9,7 +9,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    id: int
+    id: str
     session_id: str
     user_message: str
     bot_response: str
