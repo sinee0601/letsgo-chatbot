@@ -25,4 +25,6 @@ async def generate_response(
         contents=contents,
         config=_config,
     )
+    if response.text is None:
+        raise ValueError("Gemini returned an empty response")
     return response.text

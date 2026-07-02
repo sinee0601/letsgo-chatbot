@@ -22,11 +22,9 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    # 맥락 의존 후속 질문("아까 거 말고" 등)은 공유 캐시를 조회/저장하지 않는다.
     has_history = await session_has_history(request.session_id)
     cacheable = is_self_contained(request.message, has_history)
 
-    # 임베딩/벡터검색 실패는 캐시만 건너뛰고 정상 생성으로 폴백한다.
     embedding = None
     cached = None
     if cacheable:

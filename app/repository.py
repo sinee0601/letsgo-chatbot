@@ -90,7 +90,6 @@ async def delete_session(session_id: str) -> int:
 
 
 async def get_cached_response(embedding: bytes) -> str | None:
-    """임베딩 벡터로 가장 가까운 캐시를 찾아, 유사도가 임계값 이상이면 답변을 반환한다."""
     query = (
         Query("*=>[KNN 1 @embedding $vec AS distance]")
         .sort_by("distance")
@@ -103,7 +102,6 @@ async def get_cached_response(embedding: bytes) -> str | None:
     if not result.docs:
         return None
 
-    # COSINE distance = 1 - cosine similarity. 거리가 작을수록 의미가 가깝다.
     max_distance = 1 - settings.cache_similarity_threshold
     top = result.docs[0]
     if float(top.distance) <= max_distance:
