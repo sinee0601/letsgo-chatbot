@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     keyword_cache_ttl: int = 60 * 60 * 24
     gemini_model: str
     system_instruction: str | None = None
-    embedding_model: str = "text-embedding-004"
+    embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     cache_similarity_threshold: float = 0.92
 

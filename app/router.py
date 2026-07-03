@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from app.cacheability import is_self_contained
@@ -17,6 +19,8 @@ from app.repository import (
 )
 from app.schemas import ChatLogList, ChatRequest, ChatResponse
 
+logger = logging.getLogger("app.chat")
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -24,6 +28,8 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def chat(request: ChatRequest):
     has_history = await session_has_history(request.session_id)
     cacheable = is_self_contained(request.message, has_history)
+    logger.info("chat: session=%s cacheable=%s has_history=%s",
+                request.session_id, cacheable, has_history)
 
     embedding = None
     cached = None
@@ -31,7 +37,10 @@ async def chat(request: ChatRequest):
         try:
             embedding = await embed_text(request.message)
             cached = await get_cached_response(embedding)
-        except Exception:
+            logger.info("cache lookup: %s", "HIT" if cached is not None else "MISS")
+        except Exception as e:
+            # 임베딩/조회 실패는 치명적이지 않다 → 캐시만 건너뛰고 정상 응답 진행.
+            logger.warning("cache skipped (embedding/lookup failed): %s", e)
             embedding = None
 
     if cached is not None:
@@ -55,8 +64,9 @@ async def chat(request: ChatRequest):
         if cacheable and embedding is not None and bot_response:
             try:
                 await upsert_cache(embedding, bot_response)
+                logger.info("cache stored: session=%s", request.session_id)
             except Exception:
-                pass
+                logger.exception("cache store failed")
 
     log = await save_chat_log(
         request.session_id, request.message, bot_response, model
