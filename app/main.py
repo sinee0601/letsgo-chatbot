@@ -7,8 +7,6 @@ from app.database import close_connections, init_indexes
 from app.router import router
 
 def _setup_logging() -> None:
-    # uvicorn/root 설정에 의존하지 않도록 "app" 로거에 핸들러를 직접 부착한다.
-    # basicConfig는 root에 핸들러가 이미 있으면 무시되어 로그가 안 찍히는 경우가 있다.
     app_logger = logging.getLogger("app")
     app_logger.setLevel(logging.INFO)
     app_logger.propagate = False
@@ -32,14 +30,14 @@ async def lifespan(app: FastAPI):
     logging.getLogger("app").info("startup: initializing indexes")
     await init_indexes()
     yield
-    await eureka_client.init_async(
-        eureka_server=settings.eureka_server,
-        app_name=settings.app_name,
-        instance_port=settings.instance_port
-    )
-    yield
+    # await eureka_client.init_async(
+    #     eureka_server=settings.eureka_server,
+    #     app_name=settings.app_name,
+    #     instance_port=settings.instance_port
+    # )
+    # yield
     await close_connections()
-    await eureka_client.stop_async()
+    # await eureka_client.stop_async()
 
 
 app = FastAPI(
