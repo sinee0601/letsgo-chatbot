@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     keyword_cache_ttl: int = 60 * 60 * 24
     gemini_model: str
     system_instruction: str | None = None
+    eureka_server: str
+    app_name: str
+    instance_port: str
 
     class Config:
         env_file = ".env"
