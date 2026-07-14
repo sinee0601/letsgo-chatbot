@@ -25,17 +25,40 @@ ENV/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 
+# ----- Language servers / tooling caches -----
+.pyrefly/
+.pyre/
+.pytype/
+.dmypy.json
+
 # ----- IDE / editor -----
-.vscode/
+# .vscode는 무시하되, 팀 공유용 설정만 예외로 추적 (인터프리터 고정 등)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 *.swp
+*~
 
 # ----- OS -----
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# ----- Logs / local DB -----
+# ----- Logs / local data -----
 *.log
 *.sqlite3
+# Redis 로컬 스냅샷(혹시 컨테이너 밖에서 실행 시)
+dump.rdb
+*.rdb
+
+# ----- Claude Code (개인 로컬 설정) -----
+.claude/
+CLAUDE.local.md
+
+# ----- 개인 문서/메모 폴더 (업로드 제외) -----
+/MD/

@@ -6,5 +6,4 @@ google-genai
 pydantic
 pydantic-settings
 python-dotenv
-kiwipiepy
 py-eureka-client

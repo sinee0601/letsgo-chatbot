@@ -1,10 +1,12 @@
+import uuid
 from datetime import datetime
 
 from bson import ObjectId
 from bson.errors import InvalidId
+from redis.commands.search.query import Query
 
 from app.config import settings
-from app.database import chat_logs_collection, redis_client
+from app.database import CACHE_INDEX, CACHE_PREFIX, chat_logs_collection, redis_client
 
 
 def _serialize_log(doc: dict) -> dict:
@@ -28,6 +30,13 @@ async def save_chat_log(
     result = await chat_logs_collection.insert_one(doc)
     doc["_id"] = result.inserted_id
     return _serialize_log(doc)
+
+
+async def session_has_history(session_id: str) -> bool:
+    doc = await chat_logs_collection.find_one(
+        {"session_id": session_id}, projection={"_id": 1}
+    )
+    return doc is not None
 
 
 async def get_session_history(session_id: str, limit: int = 20) -> list[dict]:
@@ -80,15 +89,29 @@ async def delete_session(session_id: str) -> int:
     return result.deleted_count
 
 
-def _cache_key(keywords: str) -> str:
-    return f"kw:{keywords}"
-
-
-async def get_cached_response(keywords: str) -> str | None:
-    return await redis_client.get(_cache_key(keywords))
-
-
-async def upsert_cache(keywords: str, cached_response: str) -> None:
-    await redis_client.set(
-        _cache_key(keywords), cached_response, ex=settings.keyword_cache_ttl
+async def get_cached_response(embedding: bytes) -> str | None:
+    query = (
+        Query("*=>[KNN 1 @embedding $vec AS distance]")
+        .sort_by("distance")
+        .return_fields("response", "distance")
+        .dialect(2)
     )
+    result = await redis_client.ft(CACHE_INDEX).search(
+        query, query_params={"vec": embedding}
+    )
+    if not result.docs:
+        return None
+
+    max_distance = 1 - settings.cache_similarity_threshold
+    top = result.docs[0]
+    if float(top.distance) <= max_distance:
+        return top.response
+    return None
+
+
+async def upsert_cache(embedding: bytes, cached_response: str) -> None:
+    key = f"{CACHE_PREFIX}{uuid.uuid4().hex}"
+    await redis_client.hset(
+        key, mapping={"embedding": embedding, "response": cached_response}
+    )
+    await redis_client.expire(key, settings.keyword_cache_ttl)
